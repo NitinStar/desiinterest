@@ -1,0 +1,195 @@
+<div class="calculator-wrapper">
+  <header class="calc-header">
+    <h1>🏦 Desi Interest Calculator</h1>
+    <p>Calculate daily reducing-balance interest with partial repayments</p>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="calculate()" class="calc-form">
+
+    <!-- Loan Details -->
+    <section class="form-section">
+      <h2>Loan Details</h2>
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="principal">Principal Amount (₹)</label>
+          <input id="principal" type="number" formControlName="principal" placeholder="e.g. 1000000" />
+          @if (isInvalid('principal')) {
+            <span class="error">Enter a valid principal amount.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="rate">Rate of Interest (% per annum)</label>
+          <input id="rate" type="number" formControlName="rateOfInterest" placeholder="e.g. 12" step="0.01" />
+          @if (isInvalid('rateOfInterest')) {
+            <span class="error">Enter a valid interest rate (0.01–100).</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="startDate">Loan Start Date</label>
+          <input id="startDate" type="date" formControlName="startDate" />
+          @if (isInvalid('startDate')) {
+            <span class="error">Start date is required.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="endDate">Interest End Date</label>
+          <input id="endDate" type="date" formControlName="endDate" />
+          @if (isInvalid('endDate')) {
+            <span class="error">End date is required.</span>
+          }
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Repayments -->
+    <section class="form-section">
+      <div class="section-header">
+        <h2>Repayments</h2>
+        <button type="button" class="btn btn-secondary" (click)="addRepayment()">+ Add Repayment</button>
+      </div>
+
+      @if (repayments.length === 0) {
+        <p class="empty-note">No repayments added. Interest will be calculated on the full principal till the end date.</p>
+      }
+
+      <div formArrayName="repayments" class="repayments-list">
+        @for (item of repayments.controls; track item; let i = $index) {
+          <div [formGroupName]="i" class="repayment-row">
+            <span class="repayment-index">#{{ i + 1 }}</span>
+
+            <div class="field">
+              <label>Amount (₹)</label>
+              <input type="number" formControlName="amount" placeholder="e.g. 20000" />
+              @if (getRepaymentGroup(i).get('amount')?.invalid && getRepaymentGroup(i).get('amount')?.touched) {
+                <span class="error">Required.</span>
+              }
+            </div>
+
+            <div class="field">
+              <label>Repayment Date</label>
+              <input type="date" formControlName="date" />
+              @if (getRepaymentGroup(i).get('date')?.invalid && getRepaymentGroup(i).get('date')?.touched) {
+                <span class="error">Required.</span>
+              }
+            </div>
+
+            <button type="button" class="btn btn-danger" (click)="removeRepayment(i)" title="Remove">✕</button>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <div class="field basis-field">
+        <label for="calcBasis">Calculation Basis</label>
+        <select id="calcBasis" formControlName="calculationBasis" class="basis-select">
+            <option value="monthly">Monthly Basis</option>
+            <option value="daily">Day Basis</option>
+        </select>
+      </div>
+      <div class="form-actions-right">
+        <button type="submit" class="btn btn-primary">Calculate Interest</button>
+        <button type="button" class="btn btn-outline" (click)="reset()">Reset</button>
+      </div>
+    </div>
+
+  </form>
+
+  <!-- Error -->
+  @if (errorMessage) {
+    <div class="alert alert-error">⚠️ {{ errorMessage }}</div>
+  }
+
+  <!-- Results -->
+  @if (result) {
+    <section class="results-section">
+      <h2>📊 Calculation Results</h2>
+
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="summary-card accent-blue">
+          <span class="card-label">Total Interest</span>
+          <span class="card-value">{{ result.totalInterest | currency:'INR':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="summary-card accent-green">
+          <span class="card-label">Total Repaid</span>
+          <span class="card-value">{{ result.totalRepaid | currency:'INR':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="summary-card accent-orange">
+          <span class="card-label">Outstanding Principal</span>
+          <span class="card-value">{{ result.finalPrincipal | currency:'INR':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="summary-card accent-red">
+          <span class="card-label">Total Payable (Principal + Interest)</span>
+          <span class="card-value">{{ result.totalPayable | currency:'INR':'symbol':'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <!-- Breakdown Table -->
+      <h3>Period-wise Breakdown</h3>
+      <div class="table-wrapper">
+        <table class="breakdown-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Period Start</th>
+              <th>Period End</th>
+              <th>{{ result!.breakdown[0]?.applicableMonths !== null ? 'Applicable Months' : 'Days' }}</th>
+              <th>Opening Principal (₹)</th>
+              <th>Interest Accrued (₹)</th>
+              <th>Repayment (₹)</th>
+              <th>Closing Principal (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of result.breakdown; track row.periodStart; let i = $index) {
+              <tr [class.repayment-row-highlight]="row.repaymentAmount > 0">
+                <td>{{ i + 1 }}</td>
+                <td>{{ row.periodStart | date:'dd MMM yyyy' }}</td>
+                <td>{{ row.periodEnd | date:'dd MMM yyyy' }}</td>
+                <td>
+                  @if (row.applicableMonths !== null) {
+                    {{ row.applicableMonths }}
+                    <span class="months-hint">({{ row.days }} days)</span>
+                  } @else {
+                    {{ row.days }}
+                  }
+                </td>
+                <td>{{ row.openingPrincipal | number:'1.2-2' }}</td>
+                <td class="interest-cell">{{ row.interestAccrued | number:'1.2-2' }}</td>
+                <td class="repayment-cell">{{ row.repaymentAmount | number:'1.2-2' }}</td>
+                <td>{{ row.closingPrincipal | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="5"><strong>Total</strong></td>
+              <td><strong>{{ result.totalInterest | number:'1.2-2' }}</strong></td>
+              <td><strong>{{ result.totalRepaid | number:'1.2-2' }}</strong></td>
+              <td><strong>{{ result.finalPrincipal | number:'1.2-2' }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Formula note -->
+      @if (result!.breakdown[0]?.applicableMonths !== null) {
+        <p class="formula-note">
+          📐 Formula used: <strong>Interest = (Principal × Rate × Applicable Months) / (12 × 100)</strong>
+          &nbsp;|&nbsp; Rounding: 0–5 days = 0 months &nbsp;·&nbsp; 6–15 days = 0.5 months &nbsp;·&nbsp; 16–30 days = 1 month
+        </p>
+      } @else {
+        <p class="formula-note">
+          📐 Formula used: <strong>Interest = (Principal × Rate × Days) / (360 × 100)</strong>
+        </p>
+      }
+    </section>
+  }
+</div>

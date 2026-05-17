@@ -1,12 +1,11 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { InterestCalculatorComponent } from './components/interest-calculator/interest-calculator.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [InterestCalculatorComponent],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
 })
-export class App {
-  protected readonly title = signal('desi-interest-calculator');
-}
+export class App {}
