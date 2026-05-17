@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "deploy": "ng build --base-href /desiinterest/ && copy src\\_redirects docs\\browser\\_redirects",
+    "deploy": "ng build --base-href /desiinterest/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
