@@ -52,6 +52,11 @@
   padding-bottom: 0.4rem;
   border-bottom: 1px solid #e2e8f0;
 }
+.section-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.6rem;
+}
 .section-header h2 {
   margin: 0;
   padding: 0;

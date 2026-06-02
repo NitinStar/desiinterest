@@ -41,16 +41,12 @@ export class InterestCalculatorService {
       const periodStart = checkpoints[i].date;
       const periodEnd = checkpoints[i + 1].date;
       const repaymentAmount = checkpoints[i + 1].repayment;
-
+      
+     // // relative to last repayment date.
       const days = this.daysBetween(periodStart, periodEnd);
-
-      // Cumulative days from loan start to period start and end.
-      // Applicable months use the differential so rounding is always evaluated
-      // relative to the original loan start date, not the last repayment date.
-      const cumulativeDaysAtStart = this.daysBetween(loan.startDate, periodStart);
-      const cumulativeDaysAtEnd   = this.daysBetween(loan.startDate, periodEnd);
+     
       const applicableMonths = isMonthly
-        ? this.toApplicableMonths(cumulativeDaysAtEnd) - this.toApplicableMonths(cumulativeDaysAtStart)
+        ? this.toApplicableMonths(days)
         : null;
 
       const interestAccrued = isMonthly

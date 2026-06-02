@@ -50,7 +50,6 @@
     <section class="form-section">
       <div class="section-header">
         <h2>Repayments</h2>
-        <button type="button" class="btn btn-secondary" (click)="addRepayment()">+ Add Repayment</button>
       </div>
 
       @if (repayments.length === 0) {
@@ -81,6 +80,9 @@
             <button type="button" class="btn btn-danger" (click)="removeRepayment(i)" title="Remove">✕</button>
           </div>
         }
+      </div>
+      <div class="section-footer">
+        <button type="button" class="btn btn-secondary" (click)="addRepayment()">+ Add Repayment</button>
       </div>
     </section>
 
